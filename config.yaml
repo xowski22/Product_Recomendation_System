@@ -1,0 +1,11 @@
+model:
+  embedding_dim: 100
+
+training:
+  batch_size: 64
+  learning_rate: 0.001
+  num_epochs: 20
+
+api:
+  host: "0.0.0.0"
+  port: 8080
