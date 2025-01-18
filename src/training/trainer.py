@@ -11,23 +11,26 @@ def train_epoch(model: nn.Module,
                 optimizer: torch.optim.Optimizer,
                 criterion: nn.Module,
                 device:str) -> Dict[str, float]:
-    model.train()
+    model.train() #przełączenie modelu w tryb trenowania
     total_loss = 0.0
     for batch in train_loader:
         user_ids = batch['user_id'].to(device)
         item_ids = batch['item_id'].to(device)
         ratings = batch['rating'].to(device)
 
+        #przewidywanie ocen prze foward pass
         predictions = model(user_ids, item_ids, ratings)
+        #obliczanie straty między przewidywaniami, a faktycznymi ocenami
         loss = criterion(predictions, ratings)
 
+        #backward pass - aktualizacja wag
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
         total_loss += loss.item()
 
-    return {'loss': total_loss / len(train_loader)}
+    return {'loss': total_loss / len(train_loader)}#średnia strata z jednej epoki
 
 def train_model(model: nn.Module,
                 train_loader: DataLoader,
@@ -43,9 +46,12 @@ def train_model(model: nn.Module,
     mlflow.log_param(config)
 
     for epoch in range(config['num_epochs']):
+        #trenujemy przez jedną epokę
         train_metrics = train_epoch(model, train_loader, optimizer, criterion, device)
+        #zapis metryk z treningu
         mlflow.log_metrics(train_metrics, step=epoch)
 
+        #walidacja modelu
         val_metrics = validate(model, val_loader, criterion, device)
         mlflow.log_metrics(val_metrics, step=epoch)
 
