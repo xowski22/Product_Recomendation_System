@@ -15,8 +15,9 @@ class RecommendationResponse(BaseModel):
 @app.post("/recommend/", response_model=RecommendationResponse)
 async def get_recommendation(request: RecomendationRequest):
     try:
-        items = [1, 2, 3, 4, 5]
-        scores = [0.9, 0.8, 0.7, 0.6, 0.5]
+        #wstawić logikę rekomendacji
+        items = [1, 2, 3, 4, 5] #przykładowe id produktów
+        scores = [0.9, 0.8, 0.7, 0.6, 0.5] #przykładowe scores
         return RecommendationResponse(items=items[:request.n_recommendations],
                                       scores=scores[:request.n_recommendations])
     except Exception as e:
