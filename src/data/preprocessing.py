@@ -5,7 +5,7 @@ from pathlib import Path
 def load_ml1m_data(data_dir: str):
     ratings = pd.read_csv(Path(data_dir) / 'ratings.csv',
                           sep='::',
-                          names=['user_id', 'item_id', 'rating', 'timestamp'],
+                          names=['user_id', 'movie_id', 'rating', 'timestamp'],
                           engine='python'
                           )
 
