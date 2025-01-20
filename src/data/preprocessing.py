@@ -3,15 +3,17 @@ import numpy as np
 from pathlib import Path
 
 def load_ml1m_data(data_dir: str):
-    ratings = pd.read_csv(Path(data_dir) / 'ratings.csv',
+    ratings = pd.read_csv(Path(data_dir) / 'ratings.dat',
                           sep='::',
                           names=['user_id', 'movie_id', 'rating', 'timestamp'],
+                          encoding='latin-1',
                           engine='python'
                           )
 
-    movies = pd.read_csv(Path(data_dir) / 'movies.csv',
+    movies = pd.read_csv(Path(data_dir) / 'movies.dat',
                          sep='::',
                          names=['movie_id', 'title', 'genres'],
+                         encoding='latin-1',
                          engine='python'
                          )
     return ratings, movies
