@@ -22,7 +22,7 @@ class MatrixFactorization(nn.Module):
 
 
 
-    def forward(self, users_ids: torch.Tensor, items_ids: torch.Tensor, user_bias: torch.Tensor, item_bias: torch.Tensor) -> torch.Tensor:
+    def forward(self, users_ids: torch.Tensor, items_ids: torch.Tensor) -> torch.Tensor:
         #get embeddings from users and items
         user_embeds = self.user_embeddings(users_ids)
         item_embeds = self.item_embeddings(items_ids)
