@@ -12,7 +12,6 @@ class RecommenderDataset(Dataset):
         return len(self.ratings)
 
     def __getitem__(self, idx):
-        #tworzy słownik z wartościami dla indexu
         sample = {
             'user_id': self.users[idx],
             'item_id': self.items[idx],
