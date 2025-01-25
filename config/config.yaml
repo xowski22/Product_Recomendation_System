@@ -1,5 +1,6 @@
 model:
   embedding_dim: 100
+  reg_lambda: 0.01
 
 training:
   batch_size: 64
