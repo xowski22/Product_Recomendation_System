@@ -11,19 +11,23 @@ def train_epoch(model: nn.Module,
                 optimizer: torch.optim.Optimizer,
                 criterion: nn.Module,
                 device:str) -> Dict[str, float]:
-    model.train() #przełączenie modelu w tryb trenowania
+    model.train() #switching model into train mode
     total_loss = 0.0
     for batch in train_loader:
         user_ids = batch['user_id'].to(device)
         item_ids = batch['item_id'].to(device)
         ratings = batch['rating'].to(device)
 
-        #przewidywanie ocen prze foward pass
-        predictions = model(user_ids, item_ids, ratings)
-        #obliczanie straty między przewidywaniami, a faktycznymi ocenami
-        loss = criterion(predictions, ratings)
+        #redicting ratings by foward pass
+        predictions, user_embeds, item_embeds = model(user_ids, item_ids, ratings)
+        #calculating mse loss
+        mse_loss = criterion(predictions, ratings)
 
-        #backward pass - aktualizacja wag
+        reg_loss = model.reg_lambda + (torch.norm(user_embeds)**2 + torch.norm(item_embeds)**2)
+
+        loss = mse_loss + reg_loss
+
+        #backward pass - updating weights
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
