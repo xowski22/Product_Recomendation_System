@@ -9,7 +9,6 @@ from data.dataset import RecommenderDataset
 from src.models.model import MatrixFactorization
 from src.training.trainer import train_model
 
-"""implement pathlib to make main work, some bullshit with project pathing fucks it up"""
 
 def main():
 
