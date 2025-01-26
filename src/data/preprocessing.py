@@ -28,6 +28,8 @@ def preprocess_ratings(ratings_df: pd.DataFrame):
 
     ratings_df['normalized_rating'] = ratings_df['rating'] / 5.0
 
+    ratings_df = ratings_df.rename(columns={'movie_id': 'item_id'})
+
     return ratings_df, user_mapping, movies_mapping
 
 def split_data(ratings_df: pd.DataFrame, val_ratio: float = 0.2):

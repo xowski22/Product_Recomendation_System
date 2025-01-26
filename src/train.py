@@ -2,6 +2,7 @@ import yaml
 import torch
 from torch.utils.data import DataLoader
 import mlflow
+from pathlib import Path
 
 from data.preprocessing import load_ml1m_data, preprocess_ratings, split_data
 from data.dataset import RecommenderDataset
@@ -12,10 +13,15 @@ from src.training.trainer import train_model
 
 def main():
 
-    with open('config/config.yaml', 'r') as f:
+    ROOT_DIR = Path(__file__).parent.parent
+
+    config_path = ROOT_DIR / 'config' / "config.yaml"
+    data_path = ROOT_DIR / 'data' / 'raw' / 'ml-1m'
+
+    with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
 
-    ratings_df, _ = load_ml1m_data("data/raw/ml-1m")
+    ratings_df, _ = load_ml1m_data(data_path)
     processed_df, user_mapping, item_mapping = preprocess_ratings(ratings_df)
     train_data, val_data = split_data(processed_df)
 
