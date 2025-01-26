@@ -43,7 +43,14 @@ def train_model(model: nn.Module,
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model.to(device)
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=config['learning_rate'])
+    optimizer = torch.optim.Adam(model.parameters(),
+                                 lr=config['learning_rate'])
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer,
+                                                    'min',
+                                                           patience=3,
+                                                           factor=0.2,
+                                                           min_lr=1e-6,
+                                                           )
     criterion = nn.MSELoss()
 
     mlflow.start_run()
@@ -52,21 +59,23 @@ def train_model(model: nn.Module,
         mlflow.log_param(key, value)
 
     for epoch in range(config['num_epochs']):
-        #trenujemy przez jedną epokę
-        train_metrics = train_epoch(model, train_loader, optimizer, criterion, device)
-        #zapis metryk z treningu
-        mlflow.log_metrics(train_metrics, step=epoch)
 
-        #walidacja modelu
+        train_metrics = train_epoch(model, train_loader, optimizer, criterion, device)
+
         val_metrics = validate(model, val_loader, criterion, device)
-        mlflow.log_metrics(val_metrics, step=epoch)
 
         print(f"Epoch {epoch + 1}/{config['num_epochs']} ")
         print(f"Train Loss: {train_metrics['loss']}")
         print(f"Val Loss: {val_metrics['loss']}")
+        print("-" * 40)
 
-        mlflow.end_run()
-        return model
+        mlflow.log_metrics(train_metrics, step=epoch)
+        mlflow.log_metrics(val_metrics, step=epoch)
+
+        scheduler.step(val_metrics['loss'])
+
+    mlflow.end_run()
+    return model
 
 def validate(model: nn.Module,
              val_loader: DataLoader,

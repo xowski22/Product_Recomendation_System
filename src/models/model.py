@@ -8,10 +8,14 @@ class MatrixFactorization(nn.Module):
         #embedding layers init
         self.user_embeddings = nn.Embedding(num_users, embedding_dim)
         self.item_embeddings = nn.Embedding(n_items, embedding_dim)
+        self.dropout = nn.Dropout(0.2)
+
+        self.user_bn = nn.BatchNorm1d(embedding_dim)
+        self.item_bn = nn.BatchNorm1d(embedding_dim)
 
         #weights init
-        nn.init.normal_(self.user_embeddings.weight, std=0.01)
-        nn.init.normal_(self.item_embeddings.weight, std=0.01)
+        nn.init.normal_(self.user_embeddings.weight, std=0.001)
+        nn.init.normal_(self.item_embeddings.weight, std=0.001)
 
         #regularization parameter
         self.reg_lambda = reg_lambda
@@ -20,12 +24,16 @@ class MatrixFactorization(nn.Module):
         self.user_bias = nn.Parameter(torch.zeros(num_users))
         self.item_bias = nn.Parameter(torch.zeros(n_items))
 
-
+        nn.init.normal_(self.user_bias, std=0.001)
+        nn.init.normal_(self.item_bias, std=0.001)
 
     def forward(self, users_ids: torch.Tensor, items_ids: torch.Tensor) -> torch.Tensor:
         #get embeddings from users and items
-        user_embeds = self.user_embeddings(users_ids)
-        item_embeds = self.item_embeddings(items_ids)
+        user_embeds = self.dropout(self.user_embeddings(users_ids))
+        item_embeds = self.dropout(self.item_embeddings(items_ids))
+
+        user_embeds = self.user_bn(user_embeds)
+        item_embeds = self.item_bn(item_embeds)
 
         #get bias for users and items
         user_bias = self.user_bias[users_ids]

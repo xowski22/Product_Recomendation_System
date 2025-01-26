@@ -1,5 +1,5 @@
 model:
-  embedding_dim: 100
+  embedding_dim: 150
   reg_lambda: 0.01
 
 training:
