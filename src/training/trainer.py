@@ -44,7 +44,7 @@ def train_model(model: nn.Module,
     model.to(device)
 
     optimizer = torch.optim.Adam(model.parameters(),
-                                 lr=config['learning_rate'])
+                                 lr=config['training']['learning_rate'])
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer,
                                                     'min',
                                                            patience=3,
@@ -53,18 +53,20 @@ def train_model(model: nn.Module,
                                                            )
     criterion = nn.MSELoss()
 
-    mlflow.start_run()
-
     for key, value in config.items():
-        mlflow.log_param(key, value)
+        if isinstance(value, dict):
+            for sub_key, sub_value in value.items():
+                mlflow.log_param(f"{key}.{sub_key}", sub_value)
+        else:
+            mlflow.log_param(key, value)
 
-    for epoch in range(config['num_epochs']):
+    for epoch in range(config['training']['num_epochs']):
 
         train_metrics = train_epoch(model, train_loader, optimizer, criterion, device)
 
         val_metrics = validate(model, val_loader, criterion, device)
 
-        print(f"Epoch {epoch + 1}/{config['num_epochs']} ")
+        print(f"Epoch {epoch + 1}/{config['training']['num_epochs']} ")
         print(f"Train Loss: {train_metrics['loss']}")
         print(f"Val Loss: {val_metrics['loss']}")
         print("-" * 40)
@@ -74,7 +76,6 @@ def train_model(model: nn.Module,
 
         scheduler.step(val_metrics['loss'])
 
-    mlflow.end_run()
     return model
 
 def validate(model: nn.Module,

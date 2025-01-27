@@ -3,8 +3,8 @@ model:
   reg_lambda: 0.01
 
 training:
-  batch_size: 64
   learning_rate: 0.001
+  batch_size: 64
   num_epochs: 20
 
 api:
