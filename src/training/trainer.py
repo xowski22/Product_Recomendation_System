@@ -71,8 +71,10 @@ def train_model(model: nn.Module,
         print(f"Val Loss: {val_metrics['loss']}")
         print("-" * 40)
 
-        mlflow.log_metrics(train_metrics, step=epoch)
-        mlflow.log_metrics(val_metrics, step=epoch)
+        mlflow.log_metrics({
+            f"train_loss_{epoch}": train_metrics['loss'],
+            f"val_loss_{epoch}": val_metrics['loss']
+        }, step=epoch)
 
         scheduler.step(val_metrics['loss'])
 
