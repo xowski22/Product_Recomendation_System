@@ -7,7 +7,7 @@ import mlflow
 from src.data.preprocessing import load_ml1m_data, preprocess_ratings, split_data
 from src.data.dataset import RecommenderDataset
 from src.models.model import MatrixFactorization
-from grind_search import GrindSearch
+from grid_search import GrindSearch
 
 def main():
     config_path = Path("../../config/config.yaml")
