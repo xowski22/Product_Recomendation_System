@@ -8,7 +8,7 @@ from pathlib import Path
 from sklearn.model_selection import ParameterGrid
 import matplotlib.pyplot as plt
 
-class GrindSearch:
+class GridSearch:
     def __init__(
             self,
             model_class,
@@ -64,27 +64,39 @@ class GrindSearch:
         val_losses = []
 
         for epoch in range(self.num_epochs):
+            print(f"\nStarting epoch {epoch + 1}/{self.num_epochs}")
             model.train()
-            train_loss = 0.0
+            epoch_train_loss = 0.0
+            num_train_samples = 0
+
             for batch in self.train_loader:
                 user_ids = batch['user_id'].to(self.device)
                 item_ids = batch['item_id'].to(self.device)
                 ratings = batch['rating'].to(self.device)
 
-                predictions = model(user_ids, item_ids)
-                if isinstance(predictions, tuple):
-                    predictions = predictions[0]
+                optimizer.zero_grad()
+                output = model(user_ids, item_ids)
+                if isinstance(output, tuple):
+                    predictions = output[0]
+                else:
+                    predictions = output
 
                 loss = criterion(predictions, ratings)
                 loss.backward()
                 optimizer.step()
 
-                train_loss += loss.item()
-            avg_train_loss = train_loss / len(self.train_loader)
+                epoch_train_loss += loss.item()
+                num_train_samples += 1
+
+            avg_train_loss = epoch_train_loss / num_train_samples if num_train_samples > 0 else 0
             train_losses.append(avg_train_loss)
 
+            print(f"Epoch {epoch + 1} training completed - Avg train loss: {avg_train_loss:.4f}")
+
             model.eval()
-            val_loss = 0.0
+            epoch_val_loss = 0.0
+            num_val_samples = 0
+
             with torch.no_grad():
                 for batch in self.val_loader:
                     user_ids = batch['user_id'].to(self.device)
@@ -96,35 +108,34 @@ class GrindSearch:
                         predictions = predictions[0]
 
                     loss = criterion(predictions, ratings)
-                    val_loss += loss.item()
+                    epoch_val_loss += loss.item()
+                    num_val_samples += 1
 
-            avg_val_loss = val_loss / len(self.val_loader)
+            avg_val_loss = epoch_val_loss / num_val_samples if num_val_samples > 0 else 0
             val_losses.append(avg_val_loss)
+
+            print(f"Epoch {epoch + 1} validation completed - Avg val loss: {avg_val_loss:.4f}")
 
             scheduler.step(avg_val_loss)
 
             if avg_val_loss < best_val_loss:
                 best_val_loss = avg_val_loss
                 torch.save(model.state_dict(), save_dir / 'best_model.pt')
+                print(f"New best validation loss: {best_val_loss:.4f}")
 
             mlflow.log_metrics({
                 f"train_loss_epoch_{epoch}": avg_train_loss,
                 f"val_loss_epoch_{epoch}": avg_val_loss
             }, step=epoch)
 
-            self._plot_learning_curves(
-                train_losses,
-                val_losses,
-                params,
-                save_dir / f'learning_curves_epoch_{epoch}.png'
-            )
+            print(f"Completed epoch {epoch + 1}/{self.num_epochs}")
 
-            return {
-                'best_val_loss': best_val_loss,
-                'train_losses': train_losses,
-                'val_losses': val_losses,
-                'params': params
-            }
+        return {
+            'best_val_loss': best_val_loss,
+            'train_losses': train_losses,
+            'val_losses': val_losses,
+            'params': params
+        }
 
 
     def fit(self) -> List[Dict[str, Any]]:
@@ -153,7 +164,7 @@ class GrindSearch:
                     result = self._train_and_evaluate(model, params, combination_dir)
                     self.results.append(result)
 
-                    mlflow.log_metric("best_val_loss", result["best_val_loss"])
+                    mlflow.log_metric("best_val_loss", result['best_val_loss'])
 
                     self._plot_learning_curves(
                         result['train_losses'],
@@ -173,15 +184,31 @@ class GrindSearch:
             save_path: Path
     ) -> None:
         plt.figure(figsize=(10, 6))
-        plt.plot(train_losses, label='Train Loss')
-        plt.plot(val_losses, label='Validation Loss')
-        plt.xlabel('Epoch')
-        plt.ylabel('Loss')
-        plt.title(f'Learning Curves\n{params}')
-        plt.legend()
-        plt.grid(True)
 
-        plt.savefig(save_path)
+        if len(train_losses) > 1:
+            epochs = list(range(1, len(train_losses) +1))
+
+            plt.plot(epochs, train_losses, 'b-', label='Train Loss', linewidth=2)
+            plt.plot(epochs, val_losses, 'r-', label='Validation Loss', linewidth=2)
+            plt.plot(epochs, train_losses, 'bo', markersize=4)
+            plt.plot(epochs, val_losses, 'ro', markersize=4)
+
+            plt.xticks(epochs)
+            plt.xlabel('Epoch')
+            plt.ylabel('Loss')
+
+            plt.title(f'Learning Curves\n{params}')
+            plt.legend()
+            plt.grid(True)
+
+            ymin = min(min(train_losses), min(val_losses))
+            ymax = max(max(train_losses), max(val_losses))
+            margin = (ymax - ymin) * 0.1
+            plt.ylim(ymin - margin, ymax + margin)
+        else:
+            print("nothing to plot")
+
+        plt.savefig(save_path, bbox_inches='tight', dpi=100)
         mlflow.log_artifact(str(save_path))
         plt.close()
 
