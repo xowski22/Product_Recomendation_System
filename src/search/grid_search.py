@@ -31,6 +31,7 @@ class GridSearch:
         self.experiment_dir.mkdir(parents=True, exist_ok=True)
 
     def _create_combination_dir(self, combination_number, params):
+        """Creates directory for specifc parameter combination"""
         combination_dir = self.experiment_dir / f'combination_{combination_number}'
         combination_dir.mkdir(parents=True, exist_ok=True)
 
@@ -46,6 +47,7 @@ class GridSearch:
             params: Dict[str, Any],
             save_dir
 ) -> Dict[str, Union[float, Dict]]:
+        """Trains model and saves results"""
         model = model.to(self.device)
 
         optimizer = torch.optim.Adam(
@@ -139,6 +141,7 @@ class GridSearch:
 
 
     def fit(self) -> List[Dict[str, Any]]:
+        """Performs grid search over all parameters"""
         param_combinations = ParameterGrid(self.param_grind)
         total_combinations = len(param_combinations)
 
@@ -183,6 +186,8 @@ class GridSearch:
             params: Dict[str, Any],
             save_path: Path
     ) -> None:
+        """Plots and saves learning curves for parameter combinations"""
+
         plt.figure(figsize=(10, 6))
 
         if len(train_losses) > 1:
