@@ -1,6 +1,7 @@
 model:
-  embedding_dim: 150
+  embedding_dim: 50
   reg_lambda: 0.01
+  checkpoint_path: "../models/checkpoints/best_model.pt"
 
 training:
   learning_rate: 0.001
@@ -20,6 +21,9 @@ data:
   min_item_interaction: 5
   validation_size: 0.1
   test_size: 0.1
+  mappings:
+    user_mapping: "../data/mappings/user_mapping.pkl"
+    item_mapping: "../data/mappings/items_mapping.pkl"
 
 preprocessing:
   remove_duplicates: true
