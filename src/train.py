@@ -14,8 +14,12 @@ def main():
 
     ROOT_DIR = Path(__file__).parent.parent
 
+    (ROOT_DIR / 'data' / 'mappings').mkdir(parents=True, exist_ok=True)
+    (ROOT_DIR / 'models' / 'checkpoints').mkdir(parents=True, exist_ok=True)
+
     config_path = ROOT_DIR / 'config' / "config.yaml"
     data_path = ROOT_DIR / 'data' / 'raw' / 'ml-1m'
+    mappings_dir = ROOT_DIR / 'data' / 'mappings'
 
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
@@ -27,16 +31,24 @@ def main():
     train_dataset = RecommenderDataset(train_data)
     val_dataset = RecommenderDataset(val_data)
 
-    train_loader = DataLoader(train_dataset, batch_size=config['training']['batch_size'], shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=config['training']['batch_size'], shuffle=True)
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=config['training']['batch_size'],
+        shuffle=True)
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=config['training']['batch_size'],
+        shuffle=True)
 
     model = MatrixFactorization(num_users=len(user_mapping),
                                 n_items=len(item_mapping),
                                 embedding_dim=config['model']['embedding_dim']
                                 )
 
-    train_model(model, train_loader, val_loader, config['training'])
+    trained_model = train_model(model, train_loader, val_loader, config['training'])
 
+    model_save_path = ROOT_DIR / 'models' / 'checkpoints' / 'best_model.pt'
+    torch.save(trained_model.state_dict(), model_save_path)
 
 if __name__ == '__main__':
     main()

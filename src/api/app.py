@@ -1,15 +1,59 @@
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException
+import yaml
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Tuple, Dict
 import torch
-from src.models.model import MatrixFactorization
 import numpy as np
+import logging
+from pathlib import Path
+import pickle
 
+from ..models.model import MatrixFactorization
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 app = FastAPI()
 
 model = None #init with trained model
 user_mapping = None #load user mapping
 item_mapping = None #load item mapping
+
+def load_config() -> dict:
+    try:
+        with open("../config/config.yaml", "r") as f:
+            config = yaml.safe_load(f)
+        return config
+    except Exception as e:
+        logger.error(f"Failed to load config: {str(e)}")
+        raise
+
+def load_model_and_mappings() -> Tuple[MatrixFactorization, Dict, Dict]:
+    try:
+        config = load_config()
+
+        with open(Path(config['data']['mappings']['user_mapping_path']), "rb") as f:
+            user_mapping = pickle.load(f)
+
+        with open(Path(config['data']['mappings']['item_mapping_path']), "rb") as f:
+            item_mapping = pickle.load(f)
+
+        model = MatrixFactorization(
+            num_users=len(user_mapping),
+            n_items=len(item_mapping),
+            embedding_dim=config['model']['embedding_dim'],
+            reg_lambda=config['model']['reg_lambda']
+        )
+
+        model_path = Path(config['model']['checkpoint_path'])
+        model.load_state_dict(torch.load(model_path))
+        model.eval()
+
+        logger.info("Successfully loaded model and mappings")
+        return model, user_mapping, item_mapping
+    except Exception as e:
+        logger.error(f"Failed to load model and mappings: {str(e)}")
+        raise
+
 
 class RatingRequest(BaseModel):
     user_id: str = Field(..., description="User ID")
