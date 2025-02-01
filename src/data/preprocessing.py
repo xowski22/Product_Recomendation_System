@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from pathlib import Path
+import pickle
 
 def load_ml1m_data(data_dir: str):
     ratings = pd.read_csv(Path(data_dir) / 'ratings.dat',
@@ -18,7 +19,7 @@ def load_ml1m_data(data_dir: str):
                          )
     return ratings, movies
 
-def preprocess_ratings(ratings_df: pd.DataFrame):
+def preprocess_ratings(ratings_df: pd.DataFrame, save_mappings: bool = True, mappings_dir: str = "../data/mappings"):
 
     user_mapping = {id:idx for idx, id in enumerate(ratings_df['user_id'].unique())}
     movies_mapping = {id: idx for idx, id in enumerate(ratings_df['movie_id'].unique())}
@@ -29,6 +30,16 @@ def preprocess_ratings(ratings_df: pd.DataFrame):
     ratings_df['normalized_rating'] = ratings_df['rating'] / 5.0
 
     ratings_df = ratings_df.rename(columns={'movie_id': 'item_id'})
+
+    if save_mappings:
+        mappings_path = Path(mappings_dir)
+        mappings_path.mkdir(parents=True, exist_ok=True)
+
+        with open(mappings_path / 'user_mapping.pkl', 'wb') as f:
+            pickle.dump(user_mapping, f)
+
+        with open(mappings_path / 'item_mapping.pkl', 'wb') as f:
+            pickle.dump(movies_mapping, f)
 
     return ratings_df, user_mapping, movies_mapping
 
