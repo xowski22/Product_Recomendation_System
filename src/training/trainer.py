@@ -43,8 +43,10 @@ def train_model(model: nn.Module,
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model.to(device)
 
+    learning_rate = config.get('learning_rate', 0.001)
+
     optimizer = torch.optim.Adam(model.parameters(),
-                                 lr=config['training']['learning_rate'])
+                                 lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer,
                                                     'min',
                                                            patience=3,
@@ -60,13 +62,15 @@ def train_model(model: nn.Module,
         else:
             mlflow.log_param(key, value)
 
-    for epoch in range(config['training']['num_epochs']):
+    num_epochs = config.get('num_epochs', 15)
+
+    for epoch in range(num_epochs):
 
         train_metrics = train_epoch(model, train_loader, optimizer, criterion, device)
 
         val_metrics = validate(model, val_loader, criterion, device)
 
-        print(f"Epoch {epoch + 1}/{config['training']['num_epochs']} ")
+        print(f"Epoch {epoch + 1}/{num_epochs} ")
         print(f"Train Loss: {train_metrics['loss']}")
         print(f"Val Loss: {val_metrics['loss']}")
         print("-" * 40)
@@ -93,6 +97,9 @@ def validate(model: nn.Module,
             ratings = batch['rating'].to(device)
 
             predictions = model(user_ids, item_ids)
+            if isinstance(predictions, tuple):
+                predictions = predictions[0]
+
             loss = criterion(predictions, ratings)
             total_loss += loss.item()
 
