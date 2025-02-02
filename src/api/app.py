@@ -14,6 +14,21 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 app = FastAPI()
 
+class RatingRequest(BaseModel):
+    user_id: str = Field(..., description="User ID")
+    item_id: str = Field(..., description="Item ID")
+
+class RatingResponse(BaseModel):
+    predicted_rating: float
+
+class RecomendationRequest(BaseModel):
+    user_id: str = Field(..., description="User ID")
+    n_recommendations: int = Field(default=5, ge=1, le=100, description="Number of recommendations to return")
+
+class RecommendationResponse(BaseModel):
+    items: List[str] = Field(..., description="List of recommended item IDs")
+    scores: List[float] = Field(..., description="Corresponding prediction scores")
+
 model = None #init with trained model
 user_mapping = None #load user mapping
 item_mapping = None #load item mapping
@@ -82,22 +97,6 @@ def load_model_and_mappings() -> Tuple[MatrixFactorization, Dict, Dict]:
         logger.error(f"Failed to load model and mappings: {str(e)}")
         raise
 
-
-class RatingRequest(BaseModel):
-    user_id: str = Field(..., description="User ID")
-    item_id: str = Field(..., description="Item ID")
-
-class RatingResponse(BaseModel):
-    predicted_rating: float
-
-class RecomendationRequest(BaseModel):
-    user_id: str = Field(..., description="User ID")
-    n_recommendations: int = Field(default=5, ge=1, le=100, description="Number of recommendations to return")
-
-class RecommendationResponse(BaseModel):
-    items: List[str] = Field(..., description="List of recommended item IDs")
-    scores: List[float] = Field(..., description="Corresponding prediction scores")
-
 @app.on_event("startup")
 async def startup_event():
 
@@ -113,6 +112,9 @@ async def startup_event():
 async def predict_rating(request: RatingRequest):
     """Needs to be implemented further"""
     try:
+        if model is None:
+            raise HTTPException(status_code=503, detail="Model not loaded")
+
         if request.user_mapping not in user_mapping:
             raise HTTPException(status_code=404, detail="User mapping not found")
         if item_mapping not in item_mapping:
@@ -136,6 +138,7 @@ async def predict_rating(request: RatingRequest):
         return RatingResponse(predicted_rating=predicted_rating)
 
     except Exception as e:
+        logger.error(f"Prediction failed: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/recommend/", response_model=RecommendationResponse)
@@ -145,6 +148,9 @@ async def get_recommendations(request: RecomendationRequest):
 
         if request.user_id not in user_mapping:
             raise HTTPException(status_code=404, detail="User ID not found")
+
+        if model is None:
+            raise HTTPException(status_code=503, detail="Model not loaded")
 
         user_idx = user_mapping[request.user_id]
 
@@ -161,7 +167,7 @@ async def get_recommendations(request: RecomendationRequest):
 
         reverse_item_mapping = {v: k for k, v in item_mapping.items()}
         recommended_items = [reverse_item_mapping[idx] for idx in top_n_indices]
-        recommendation_scores = [float(predictions[idx]) for idx in top_n_indices]
+        recommendation_scores = [float(predictions[idx]) * 5.0 for idx in top_n_indices]
 
         return RecommendationResponse(
             items=recommended_items,
@@ -169,6 +175,7 @@ async def get_recommendations(request: RecomendationRequest):
         )
 
     except Exception as e:
+        logger.error(f"Prediction failed: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/health/")
