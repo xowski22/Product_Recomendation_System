@@ -18,9 +18,16 @@ model = None #init with trained model
 user_mapping = None #load user mapping
 item_mapping = None #load item mapping
 
+def get_project_root() -> Path:
+    current_file = Path(__file__).resolve()
+    return current_file.parent.parent.parent
+
 def load_config() -> dict:
     try:
-        with open("../config/config.yaml", "r") as f:
+        project_root = get_project_root()
+        config_path = project_root / "config" / "config.yaml"
+        logger.info(f"Loading config from {config_path}")
+        with open(config_path, "r") as f:
             config = yaml.safe_load(f)
         return config
     except Exception as e:
@@ -30,12 +37,28 @@ def load_config() -> dict:
 def load_model_and_mappings() -> Tuple[MatrixFactorization, Dict, Dict]:
     try:
         config = load_config()
+        project_root = get_project_root()
 
-        with open(Path(config['data']['mappings']['user_mapping_path']), "rb") as f:
+        mappings_path = project_root / "data" / "mappings"
+        logger.info(f"Loading mapping from: {mappings_path}")
+
+        user_mapping_path = mappings_path / "user_mapping.pkl"
+        logger.info(f"Loading mapping from: {user_mapping_path}")
+        if not user_mapping_path.exists():
+            raise FileNotFoundError(f"User mapping file not found at {user_mapping_path}")
+
+        with open(user_mapping_path, "rb") as f:
             user_mapping = pickle.load(f)
+        logger.info("User mapping loaded successfully")
 
-        with open(Path(config['data']['mappings']['item_mapping_path']), "rb") as f:
+        item_mapping_path = mappings_path / "item_mapping.pkl"
+        logger.info(f"Loading mapping from: {item_mapping_path}")
+        if not item_mapping_path.exists():
+            raise FileNotFoundError(f"Item mapping file not found at {item_mapping_path}")
+
+        with open(item_mapping_path, "rb") as f:
             item_mapping = pickle.load(f)
+        logger.info("Item mapping loaded successfully")
 
         model = MatrixFactorization(
             num_users=len(user_mapping),
@@ -44,11 +67,16 @@ def load_model_and_mappings() -> Tuple[MatrixFactorization, Dict, Dict]:
             reg_lambda=config['model']['reg_lambda']
         )
 
-        model_path = Path(config['model']['checkpoint_path'])
+        model_path = project_root / "models" / "checkpoints" / "best_model.pt"
+        logger.info(f"Loading model from: {model_path}")
+        if not model_path.exists():
+            raise FileNotFoundError(f"Model file not found at {model_path}")
         model.load_state_dict(torch.load(model_path))
         model.eval()
+        logger.info("Model loaded successfully")
 
         logger.info("Successfully loaded model and mappings")
+
         return model, user_mapping, item_mapping
     except Exception as e:
         logger.error(f"Failed to load model and mappings: {str(e)}")
@@ -69,6 +97,16 @@ class RecomendationRequest(BaseModel):
 class RecommendationResponse(BaseModel):
     items: List[str] = Field(..., description="List of recommended item IDs")
     scores: List[float] = Field(..., description="Corresponding prediction scores")
+
+@app.on_event("startup")
+async def startup_event():
+    try:
+        global model, user_mapping, item_mapping
+        model, user_mapping, item_mapping = load_model_and_mappings()
+        logger.info("Application startup complete - all components loaded successfully")
+    except Exception as e:
+        logger.error(f"Startup failed: {str(e)}")
+
 
 @app.post("predict/rating/", response_model=RatingResponse)
 async def predict_rating(request: RatingRequest):
@@ -132,8 +170,23 @@ async def get_recommendations(request: RecomendationRequest):
 
 @app.get("/health/")
 async def health_check():
-    return {"status": "healthy", "model_loaded": model is not None}
-
+    try:
+        health_status = {
+            "status": "healthy",
+            "model_loaded": model is not None,
+            "user_mapping_loaded": user_mapping is not None,
+            "item_mapping_loaded": item_mapping is not None,
+            "components": {
+                "model": "loaded" if model is not None else "not loaded",
+                "user_mapping": "loaded" if user_mapping is not None else "not loaded",
+                "item_mapping": "loaded" if item_mapping is not None else "not loaded",
+            }
+        }
+        logger.info(f"Health check performed: {health_status}")
+        return health_status
+    except Exception as e:
+        logger.error(f"Health check failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Health check failed: {str(e)}")
 @app.post("/reload_model/")
 async def reload_model():
     try:
