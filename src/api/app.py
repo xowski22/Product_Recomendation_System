@@ -100,6 +100,7 @@ class RecommendationResponse(BaseModel):
 
 @app.on_event("startup")
 async def startup_event():
+
     try:
         global model, user_mapping, item_mapping
         model, user_mapping, item_mapping = load_model_and_mappings()
@@ -110,6 +111,7 @@ async def startup_event():
 
 @app.post("predict/rating/", response_model=RatingResponse)
 async def predict_rating(request: RatingRequest):
+    """Needs to be implemented further"""
     try:
         if request.user_mapping not in user_mapping:
             raise HTTPException(status_code=404, detail="User mapping not found")
@@ -138,6 +140,7 @@ async def predict_rating(request: RatingRequest):
 
 @app.post("/recommend/", response_model=RecommendationResponse)
 async def get_recommendations(request: RecomendationRequest):
+    """Needs to be implemeted further"""
     try:
 
         if request.user_id not in user_mapping:
@@ -170,6 +173,7 @@ async def get_recommendations(request: RecomendationRequest):
 
 @app.get("/health/")
 async def health_check():
+    """Checks if every component is healthy, and loaded"""
     try:
         health_status = {
             "status": "healthy",
