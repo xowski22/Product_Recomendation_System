@@ -110,7 +110,7 @@ async def startup_event():
 
 @app.post("/predict/rating/", response_model=RatingResponse)
 async def predict_rating(request: RatingRequest):
-    """Needs to be implemented further"""
+    """Predict rating for specific user-item pair"""
     try:
         if model is None:
             raise HTTPException(status_code=503, detail="Model not loaded")
@@ -156,7 +156,7 @@ async def predict_rating(request: RatingRequest):
 
 @app.post("/recommend/", response_model=RecommendationResponse)
 async def get_recommendations(request: RecomendationRequest):
-    """Needs to be implemeted further"""
+    """Get personalized item recommendations for a specific user"""
     try:
 
         user_id = int(request.user_id)
