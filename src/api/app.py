@@ -108,20 +108,33 @@ async def startup_event():
         logger.error(f"Startup failed: {str(e)}")
 
 
-@app.post("predict/rating/", response_model=RatingResponse)
+@app.post("/predict/rating/", response_model=RatingResponse)
 async def predict_rating(request: RatingRequest):
     """Needs to be implemented further"""
     try:
         if model is None:
             raise HTTPException(status_code=503, detail="Model not loaded")
 
-        if request.user_mapping not in user_mapping:
+        try:
+            user_id = int(request.user_id)
+            item_id = int(request.item_id)
+            logger.info(f"Converted IDs - user_id: {user_id}, item_id: {item_id}")
+        except ValueError:
+            logger.info("Failed to convert user ID to integers")
+            raise HTTPException(status_code=404, detail="IDs must be valid integers")
+
+        logger.info(f"Checking mappings. User ID exists: {user_id in user_mapping}, Irrelevant: {item_id in item_mapping}")
+
+        if user_id not in user_mapping:
+            logger.info(f"User ID {user_id} not found in user_mapping")
             raise HTTPException(status_code=404, detail="User mapping not found")
-        if item_mapping not in item_mapping:
+        if item_id not in item_mapping:
+            logger.info(f"Item ID {item_id} not found in item_mapping")
             raise HTTPException(status_code=404, detail="Item mapping not found")
 
-        user_idx = user_mapping[request.user_id]
-        item_idx = item_mapping[request.item_id]
+        user_idx = user_mapping[user_id]
+        item_idx = item_mapping[item_id]
+        logger.info(f"Mapped indices - user_idx: {user_idx}, item_idx: {item_idx}")
 
         user_tensor = torch.tensor([user_idx], dtype=torch.long)
         item_tensor = torch.tensor([item_idx], dtype=torch.long)
@@ -146,13 +159,15 @@ async def get_recommendations(request: RecomendationRequest):
     """Needs to be implemeted further"""
     try:
 
-        if request.user_id not in user_mapping:
+        user_id = int(request.user_id)
+
+        if user_id not in user_mapping:
             raise HTTPException(status_code=404, detail="User ID not found")
 
         if model is None:
             raise HTTPException(status_code=503, detail="Model not loaded")
 
-        user_idx = user_mapping[request.user_id]
+        user_idx = user_mapping[user_id]
 
         user_tensor = torch.tensor([user_idx]*len(item_mapping), dtype=torch.long)
         item_tensor = torch.tensor(list(range(len(item_mapping))), dtype=torch.long)
@@ -206,3 +221,13 @@ async def reload_model():
         return {"status": "Model reloaded successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to reload model: {str(e)}")
+
+@app.get("/debug/")
+async def debug_values():
+    return {
+            "model_loaded": model is not None,
+            "user_mapping_type": str(type(user_mapping)),
+            "item_mapping_type": str(type(item_mapping)),
+            "user_mapping_size": len(user_mapping) if user_mapping else 0,
+            "item_mapping_size": len(item_mapping) if item_mapping else 0
+            }
