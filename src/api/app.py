@@ -178,7 +178,7 @@ async def get_recommendations(request: RecomendationRequest):
         top_n_indices = np.argsort(-predictions_np)[:request.n_recommendations]
 
         reverse_item_mapping = {v: k for k, v in item_mapping.items()}
-        recommended_items = [reverse_item_mapping[idx] for idx in top_n_indices]
+        recommended_items = [str(reverse_item_mapping[idx]) for idx in top_n_indices]
         recommendation_scores = [float(predictions[idx]) * 5.0 for idx in top_n_indices]
 
         return RecommendationResponse(
