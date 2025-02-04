@@ -111,48 +111,44 @@ async def startup_event():
 @app.post("/predict/rating/", response_model=RatingResponse)
 async def predict_rating(request: RatingRequest):
     """Predict rating for specific user-item pair"""
+
+    if model is None:
+        raise HTTPException(status_code=503, detail="Model not loaded")
+
     try:
-        if model is None:
-            raise HTTPException(status_code=503, detail="Model not loaded")
+        user_id = int(request.user_id)
+        item_id = int(request.item_id)
+        logger.info(f"Converted IDs - user_id: {user_id}, item_id: {item_id}")
+    except ValueError:
+        logger.info("Failed to convert user ID to integers")
+        raise HTTPException(status_code=400, detail="IDs must be valid integers")
 
-        try:
-            user_id = int(request.user_id)
-            item_id = int(request.item_id)
-            logger.info(f"Converted IDs - user_id: {user_id}, item_id: {item_id}")
-        except ValueError:
-            logger.info("Failed to convert user ID to integers")
-            raise HTTPException(status_code=404, detail="IDs must be valid integers")
+    logger.info(f"Checking mappings. User ID exists: {user_id in user_mapping}, Irrelevant: {item_id in item_mapping}")
 
-        logger.info(f"Checking mappings. User ID exists: {user_id in user_mapping}, Irrelevant: {item_id in item_mapping}")
+    if user_id not in user_mapping:
+        logger.info(f"User ID {user_id} not found in user_mapping")
+        raise HTTPException(status_code=404, detail="User mapping not found")
+    if item_id not in item_mapping:
+        logger.info(f"Item ID {item_id} not found in item_mapping")
+        raise HTTPException(status_code=404, detail="Item mapping not found")
 
-        if user_id not in user_mapping:
-            logger.info(f"User ID {user_id} not found in user_mapping")
-            raise HTTPException(status_code=404, detail="User mapping not found")
-        if item_id not in item_mapping:
-            logger.info(f"Item ID {item_id} not found in item_mapping")
-            raise HTTPException(status_code=404, detail="Item mapping not found")
+    user_idx = user_mapping[user_id]
+    item_idx = item_mapping[item_id]
+    logger.info(f"Mapped indices - user_idx: {user_idx}, item_idx: {item_idx}")
 
-        user_idx = user_mapping[user_id]
-        item_idx = item_mapping[item_id]
-        logger.info(f"Mapped indices - user_idx: {user_idx}, item_idx: {item_idx}")
+    user_tensor = torch.tensor([user_idx], dtype=torch.long)
+    item_tensor = torch.tensor([item_idx], dtype=torch.long)
 
-        user_tensor = torch.tensor([user_idx], dtype=torch.long)
-        item_tensor = torch.tensor([item_idx], dtype=torch.long)
+    with torch.no_grad():
+        model.eval()
+        prediction = model(user_tensor, item_tensor)
+        if isinstance(prediction, tuple):
+            prediction = prediction[0]
 
-        with torch.no_grad():
-            model.eval()
-            prediction = model(user_tensor, item_tensor)
-            if isinstance(prediction, tuple):
-                prediction = prediction[0]
+        predicted_rating = float(prediction.item() * 5.0)
+        predicted_rating = max(1.0, min(5.0, predicted_rating))
 
-            predicted_rating = float(prediction.item() * 5.0)
-            predicted_rating = max(1.0, min(5.0, predicted_rating))
-
-        return RatingResponse(predicted_rating=predicted_rating)
-
-    except Exception as e:
-        logger.error(f"Prediction failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return RatingResponse(predicted_rating=predicted_rating)
 
 @app.post("/recommend/", response_model=RecommendationResponse)
 async def get_recommendations(request: RecomendationRequest):
@@ -178,7 +174,8 @@ async def get_recommendations(request: RecomendationRequest):
             if isinstance(predictions, tuple):
                 predictions = predictions[0]
 
-        top_n_indices = np.argsort(-predictions)[:request.n_recommendations]
+        predictions_np = predictions.detach().numpy()
+        top_n_indices = np.argsort(-predictions_np)[:request.n_recommendations]
 
         reverse_item_mapping = {v: k for k, v in item_mapping.items()}
         recommended_items = [reverse_item_mapping[idx] for idx in top_n_indices]
