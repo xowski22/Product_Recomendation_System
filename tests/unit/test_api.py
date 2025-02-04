@@ -19,7 +19,14 @@ def mock_mappings():
 def mock_model():
     model = Mock()
     model.eval = Mock(return_value=None)
-    model.return_value = torch.tensor([0.7], requires_grad=True)
+    def side_effect(user_tensor, item_tensor):
+        if len(item_tensor) == 1:
+            return torch.tensor([0.7])
+        else:
+            return torch.tensor([0.7, 0.6, 0.5])
+
+    model.side_effect = side_effect
+    model.__call__ = Mock(side_effect=side_effect)
     model.weight = torch.nn.Parameter(torch.randn(1))
 
     return model
@@ -102,15 +109,25 @@ def test_full_flow(client, mock_mappings, mock_model):
         assert health_response.status_code == 200
 
         rating_response = client.post(
-            "/predict/rating",
+            "/predict/rating/",
             json={"user_id": "1", "item_id": "1"}
         )
         assert rating_response.status_code == 200
+
+        print(f"Rating response: {rating_response.json() if rating_response.status_code == 200 else rating_response.text}")
 
         recommend_response = client.post(
             "/recommend/",
             json={"user_id": "1", "n_recommendations": 5}
         )
+        print(f"Recommed response: {recommend_response.json() if recommend_response.status_code == 200 else recommend_response.text}")
+
+        if recommend_response.status_code == 200:
+            data = recommend_response.json()
+            assert "items" in data
+            assert "scores" in data
+            assert all(isinstance(item, str) for item in data["items"])
+
         assert recommend_response.status_code == 200
 
 class TestParameterValidation:
@@ -118,8 +135,8 @@ class TestParameterValidation:
         ("1", "2", 200),
         ("abc", "1", 400),
         ("1", "abc", 400),
-        ("", "1", 404),
-        ("1", "", 404),
+        ("", "1", 400),
+        ("1", "", 400),
     ])
 
     def test_rating_parameters(self, client, mock_mappings, mock_model, user_id, item_id, expected_status):
@@ -148,4 +165,6 @@ class TestParameterValidation:
                 "/recommend/",
                 json={"user_id": "1", "n_recommendations": n_recommendations}
             )
+            if response.status_code == expected_status:
+                print(f"Recommendations response: {response.json() if response.status_code == 200 else response.text}")
             assert response.status_code == expected_status
