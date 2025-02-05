@@ -9,8 +9,8 @@ class RecommendationSystemUser(HttpUser):
     host = "http://localhost:8080/"
 
     def on_start(self):
-        self.user_ids = list(range(1, 1001))
-        self.item_ids = list(range(1, 3707))
+        self.user_ids = list(range(1, 6041))
+        self.item_ids = list(range(1, 3953))
 
         self.rec_sizes = [5, 10, 20, 50, 100]
 
@@ -34,9 +34,9 @@ class RecommendationSystemUser(HttpUser):
 
         start_time = time.time()
 
-        response = self.client.post(
+        self.client.post(
             "/predict/rating/",
-            json={"user_id": "1", "item_id": "1"}
+            json={"user_id": user_id, "item_id": item_id}
         )
 
         response_time = (time.time() - start_time) * 1000
@@ -54,9 +54,9 @@ class RecommendationSystemUser(HttpUser):
 
         start_time = time.time()
 
-        response = self.client.post(
+        self.client.post(
             "/recommend/",
-            json={"user_id": "1", "n_recommendations": 5}
+            json={"user_id": user_id, "n_recommendations": n_recommendations}
         )
 
         response_time = (time.time() - start_time) * 1000
@@ -75,7 +75,7 @@ class RecommendationSystemUser(HttpUser):
         start_time = time.time()
 
         for _ in range(batch_size):
-            item_id = random.choice(self.item_ids)
+            item_id = str(random.choice(self.item_ids))
 
             self.client.post(
                 "/predict/rating/",
@@ -93,7 +93,7 @@ class RecommendationSystemUser(HttpUser):
         @task(1)
         def test_healh_endpoint(self):
             start_time = time.time()
-            response = self.client.get("/health/")
+            self.client.get("/health/")
             response_time = (time.time() - start_time) * 1000
 
             self.log_response_time(
