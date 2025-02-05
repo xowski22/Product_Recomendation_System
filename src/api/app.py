@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, HTTPException
 import yaml
 from pydantic import BaseModel, Field
@@ -8,11 +10,24 @@ import logging
 from pathlib import Path
 import pickle
 
-from ..models.model import MatrixFactorization
+from src.models.model import MatrixFactorization
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        global model, user_mapping, item_mapping
+        model, user_mapping, item_mapping = load_model_and_mappings()
+        logger.info("Application startup complete - all components loaded successfully")
+        yield
+    except Exception as e:
+        logger.error(f"Startup failed: {str(e)}")
+        raise
+    finally:
+        pass
+app = FastAPI(lifespan=lifespan)
 
 class RatingRequest(BaseModel):
     user_id: str = Field(..., description="User ID")
@@ -97,15 +112,15 @@ def load_model_and_mappings() -> Tuple[MatrixFactorization, Dict, Dict]:
         logger.error(f"Failed to load model and mappings: {str(e)}")
         raise
 
-@app.on_event("startup")
-async def startup_event():
-
-    try:
-        global model, user_mapping, item_mapping
-        model, user_mapping, item_mapping = load_model_and_mappings()
-        logger.info("Application startup complete - all components loaded successfully")
-    except Exception as e:
-        logger.error(f"Startup failed: {str(e)}")
+# @app.on_event("startup")
+# async def startup_event():
+#
+#     try:
+#         global model, user_mapping, item_mapping
+#         model, user_mapping, item_mapping = load_model_and_mappings()
+#         logger.info("Application startup complete - all components loaded successfully")
+#     except Exception as e:
+#         logger.error(f"Startup failed: {str(e)}")
 
 
 @app.post("/predict/rating/", response_model=RatingResponse)
