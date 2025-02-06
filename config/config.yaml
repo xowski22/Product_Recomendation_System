@@ -1,6 +1,6 @@
 model:
   embedding_dim: 50
-  reg_lambda: 0.01
+  reg_lambda: 0.001
   checkpoint_path: "../models/checkpoints/best_model.pt"
 
 training:
