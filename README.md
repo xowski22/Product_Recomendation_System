@@ -64,7 +64,7 @@ Running the API Server
 -
 
 1. Start the FastAPI server:
-    uvicorn src.api.app:app --host 0.0.0.0 --port 8080
+    python run_api.py
 2. Access the API documentation http://localhost:8080/docs
 
 API Examples
@@ -123,7 +123,7 @@ Hyperparameter Optimization
 Best performing configuration:
 
 - Embedding dimention: 50
-- Regularization lambda: 0.01
+- Regularization lambda: 0.001
 - Learing rate: 0.001
 - Batch size: 64
 
