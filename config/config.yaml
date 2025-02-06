@@ -17,13 +17,16 @@ api:
   port: 8080
 
 data:
+  type: "movielens"
+  path: "data/raw/ml-1m"
+  ratings_file: "ratings.dat"
+  movies_file: "movies.dat"
+  separator: "::"
   min_user_interactions: 5
   min_item_interaction: 5
   validation_size: 0.1
   test_size: 0.1
-  mappings:
-    user_mapping: "../data/mappings/user_mapping.pkl"
-    item_mapping: "../data/mappings/items_mapping.pkl"
+  mappings_path: "data/mappings"
 
 preprocessing:
   remove_duplicates: true
