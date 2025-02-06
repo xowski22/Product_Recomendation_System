@@ -42,7 +42,8 @@ def main():
 
     model = MatrixFactorization(num_users=len(user_mapping),
                                 n_items=len(item_mapping),
-                                embedding_dim=config['model']['embedding_dim']
+                                embedding_dim=config['model']['embedding_dim'],
+                                reg_lambda=config['model']['reg_lambda']
                                 )
 
     trained_model = train_model(model, train_loader, val_loader, config['training'])
