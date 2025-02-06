@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class MatrixFactorization(nn.Module):
-    def __init__(self, num_users: int, n_items: int, embedding_dim: int = 100, reg_lambda: float = 0.1):
+    def __init__(self, num_users: int, n_items: int, embedding_dim: int, reg_lambda: float):
         super().__init__()
         #embedding layers init
         self.user_embeddings = nn.Embedding(num_users, embedding_dim)
