@@ -3,6 +3,8 @@ import numpy as np
 from pathlib import Path
 import pickle
 
+"""Older """
+
 def load_ml1m_data(data_dir: str):
     ratings = pd.read_csv(Path(data_dir) / 'ratings.dat',
                           sep='::',
