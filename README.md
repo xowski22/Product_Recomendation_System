@@ -6,11 +6,11 @@ Overview
 
 Project implements a product recommendation system using collaborative filtering with matrix factorization. The system is built with PyTorch and provides both a training pipeline and a RestAPI for making predictions. The architecture supports flexible data loading with extensible model training and provides personalized product recommendations based on user interactions and ratings.
 
-Key feautures
+Key features
 - 
-- Modular data loading architecture supporting multible data sources
-- Matrix fatorization-based collaborative filtering
-- Robust training pipeline with hyperparemeter optimization
+- Modular data loading architecture supporting multable data sources
+- Matrix factorization-based collaborative filtering
+- Robust training pipeline with hyperparameter optimization
 - Production-ready RestAPI with FastAPI
 - Comprehensive testing suite and performance monitoring
 - Load testing capabilities with Locust
@@ -34,7 +34,7 @@ product-recommendation/ \
 │   └── training/              # Training pipeline \
 ├── tests/                     # Unit and integration tests \
 ├── notebooks/                # Analysis notebooks \
-└── experiments/             # Experiment tracking \
+└── experiments/             # Experiment tracking 
 
 Data Loading Architecture
 -
@@ -156,7 +156,7 @@ response = response.post(
 
 print(response.json())
 ```
-Get Product Recomendations
+Get Product Recommendations
 -
 ```
 response = requests.port(
@@ -186,12 +186,12 @@ Hyperparameter Optimization
 
 Best performing configuration:
 
-- Embedding dimention: 50
+- Embedding dimension: 50
 - Regularization lambda: 0.001
-- Learing rate: 0.001
+- Learning rate: 0.001
 - Batch size: 64
 
-Model Perfmance:
+Model Performance:
 
 - Training loss: 0.8077
 - Validation loss: 0.8268
@@ -224,15 +224,20 @@ locust -f locustfile.py
 Future improvements
 -
 
-1. Implement hybrid recommendation approach combining collaborative and content-based filtering
-2. Add support for cold-start problems with new products/users
-3. Implement A/B testing capabilities
-4. Add real-time model updating based on user interactions
-5. Implement caching for frequently requested predictions
-6. Add support for seasonal and temporal patterns in recommendations
-7. Implement personalized recommendation explanations
+1. Additional data loader implementations for different data sources
+2. Enhanced preprocessing pipeline with configurable steps
+3. Support for cold start scenarios
+4. Real-time model updating
+5. Response catching layer
+6. A/B testing framework
+7. Recommendation explanations
 
 Contributing
 -
 
 Contributions are welcome! Feel free to submit a Pull Request. For major changes, please open an issue first to discuss what would you like to change.
+
+License
+-
+
+MIT
