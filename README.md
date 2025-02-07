@@ -1,32 +1,90 @@
 Product Recommendation System
+-
 
 Overview
+-
 
-Project implements a product recommendation system using collaborative filtering with matrix factorization. The system is built with PyTorch and provides both a training pipeline and a RestAPI for making predictions. Collaborative filtering provides personalized product recommendations based on user interactions and ratings.
+Project implements a product recommendation system using collaborative filtering with matrix factorization. The system is built with PyTorch and provides both a training pipeline and a RestAPI for making predictions. The architecture supports flexible data loading with extensible model training and provides personalized product recommendations based on user interactions and ratings.
 
-Project Goals
+Key feautures
 - 
-- Implement a recommendation system using matrix factorization
-- Provide accurate product recommendations and rating predictions
-- Create a production-ready API for real-time recommendations
-- Support both single predictions and batch recommendations
-- Ensure robust model evaluation and experimentation capabilities
-- Enable easy integration with e-commerce platforms
+- Modular data loading architecture supporting multible data sources
+- Matrix fatorization-based collaborative filtering
+- Robust training pipeline with hyperparemeter optimization
+- Production-ready RestAPI with FastAPI
+- Comprehensive testing suite and performance monitoring
+- Load testing capabilities with Locust
 
 Project Structure
 -
 
-product-recommendation/
-├── config/
-│   └── config.yaml         # Configuration parameters
-├── src/
-│   ├── api/               # FastAPI implementation 
-│   ├── data/              # Data processing modules
-│   ├── models/            # Model architecture
-│   └── training/          # Training pipeline
-├── tests/                 # Unit and integration tests
-├── notebooks/            # Analysis notebooks
-└── experiments/          # Experiment tracking
+product-recommendation/ \
+├── config/ \
+│   └── config.yaml              # Configuration parameters \
+├── src/ \
+│   ├── api/                     # FastAPI implementation \
+│   ├── data/ \
+│   │   ├── loaders/            # Data loading modules \
+│   │   │   ├── base_loader.py  # Abstract base loader \
+│   │   │   ├── movielens_loader.py  # MovieLens implementation \
+│   │   │   └── loader_factory.py    # Factory for loader creation \
+│   │   ├── preprocessing.py    # Data preprocessing utilities \
+│   │   └── dataset.py         # PyTorch dataset implementations \
+│   ├── models/                 # Model architectures \
+│   └── training/              # Training pipeline \
+├── tests/                     # Unit and integration tests \
+├── notebooks/                # Analysis notebooks \
+└── experiments/             # Experiment tracking \
+
+Data Loading Architecture
+-
+
+The system implements a flexible data loading architecture:
+
+```
+
+class BaseDataLoader(ABC):
+    def __init__(self, config: Dict[str, Any]):
+        self.config = config
+
+    @abstractmethod
+    def load_data(self) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """returns tuple containing (ratings_df, items_df"""
+        pass
+
+    @abstractmethod
+    def preprocess_data(self, ratings_df: pd.DataFrame) -> Tuple[pd.DataFrame, Dict[int, int], Dict[int, int]]:
+        """
+        args
+         ratings_df : raw ratings dataframe
+
+        :returns
+            tuple containing
+                processed ratings dataframe
+                user id mapping dictionary
+                item id mapping dictionary
+        """
+        pass
+
+    @abstractmethod
+    def split_data(self, ratings_df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """
+        args
+            data: preprocessed dataframe to split
+        returns
+            tuple containing train_df, val_df
+        """
+        pass
+   ```
+
+New data sources can be added by implementing the BaseDataLoader interface:
+
+```angular2html
+class MovieLensLoader(BaseDataLoader):
+    def load_data(self):
+        # Implementation for MovieLens dataset
+        pass
+```
 
 Instalation
 -
@@ -41,30 +99,45 @@ Prerequisites
 Setup
 -
 
-1. Clone the repository: 
+1. Clone the repository:
+    ```
     git clone https://github.com/xowski22/Product_Recomendation_System.git
     cd Product_Recommendation_System
+   ```
 2. Create and activate virtual environment:
-   python -m venv .venv
+   ```
+    python -m venv .venv
    source .venv/bin/activate
+   ```
 3. Install dependencies:
+    ```
    pip install -r requirements.txt
-
+    ```
 Usage
 -
 
 Training the Model
 -
 
-1. Configure parameters in config.yaml
+1. Configure dataset and parameters in config.yaml
+    ```
+   data:
+        typetype: "movielens" 
+        path: "data/raw/ml-1m"
+        min_user_interactions: 5
+        validation_size: 0.1
+   ```
 2. Run training:
+    ```
     python /src/train.py
-
+    ```
 Running the API Server
 -
 
 1. Start the FastAPI server:
+    ```
     python run_api.py
+   ```
 2. Access the API documentation http://localhost:8080/docs
 
 API Examples
@@ -72,9 +145,7 @@ API Examples
 
 Get Rating Prediction
 -
-
-import requests
-
+```
 response = response.post(
     "http://localhost:8080/predict/rating/",
     json={
@@ -84,10 +155,10 @@ response = response.post(
 )
 
 print(response.json())
-
+```
 Get Product Recomendations
 -
-
+```
 response = requests.port(
     "http://localhost:8080/recommend/",
     json={
@@ -95,7 +166,7 @@ response = requests.port(
     "n_recommendations": 5
     }
 )
-
+```
 Model Architecture
 -
 
@@ -105,13 +176,6 @@ The system uses a Matrix Factorization model which has the following features:
 - Batch normalization for better training stability
 - Dropout for regularization
 - Global and user/item specific bias terms
-
-class MatrixFactorization(nn.Module):
-    def __init__(self, num_users, n_items, embedding_dim=100):
-        self.user_embeddings = nn.Embedding(num_users, embedding_dim)
-        self.item_embeddings = nn.Embedding(n_items, embedding_dim)
-        self.user_bias = nn.Parameter(torch.zeros(num_users))
-        self.item_bias = nn.Parameter(torch.zeros(n_items))
 
 
 Experimental Results
@@ -149,14 +213,14 @@ Development
 
 Running Tests
 -
-
+```
 pytest tests/
-
+```
 Load Testing
 -
-
+```
 locust -f locustfile.py
-
+```
 Future improvements
 -
 
