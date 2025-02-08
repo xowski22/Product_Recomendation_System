@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 from src.models.model import MatrixFactorization
 
-"""test for older model config, before chages"""
+"""Need to change it asap, wont wont with current model"""
 
 @pytest.fixture
 def sample_model():
