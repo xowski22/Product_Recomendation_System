@@ -28,7 +28,7 @@ product-recommendation/ \
 │   │   │   ├── base_loader.py  # Abstract base loader \
 │   │   │   ├── movielens_loader.py  # MovieLens implementation \
 │   │   │   └── loader_factory.py    # Factory for loader creation \
-│   │   ├── preprocessing.py    # Data preprocessing utilities \
+│   │   ├── preprocessing.py    # Older datapreprocessing utilities \
 │   │   └── dataset.py         # PyTorch dataset implementations \
 │   ├── models/                 # Model architectures \
 │   └── training/              # Training pipeline \
