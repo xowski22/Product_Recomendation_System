@@ -29,22 +29,24 @@ class MatrixFactorization(nn.Module):
 
     def forward(self, users_ids: torch.Tensor, items_ids: torch.Tensor) -> torch.Tensor:
         #get embeddings from users and items
-        user_embeds = self.dropout(self.user_embeddings(users_ids))
-        item_embeds = self.dropout(self.item_embeddings(items_ids))
-
-        user_embeds = self.user_bn(user_embeds)
-        item_embeds = self.item_bn(item_embeds)
+        user_embeds = self.user_bn(self.dropout(self.user_embeddings(users_ids)))
+        item_embeds = self.item_bn(self.dropout(self.item_embeddings(items_ids)))
 
         #get bias for users and items
         user_bias = self.user_bias[users_ids]
         item_bias = self.item_bias[items_ids]
 
-        prediction = (
-                self.global_bias +
-                user_bias +
-                item_bias +
-                torch.sum(user_embeds * item_embeds, dim=1)
-                )
+        # prediction = (
+        #         self.global_bias +
+        #         user_bias +
+        #         item_bias +
+        #         torch.sum(user_embeds * item_embeds, dim=1)
+        #         )
+
+        prediction = torch.sum(user_embeds * item_embeds, dim=1)
+        prediction.add_(self.global_bias.squeeze())
+        prediction.add_(self.user_bias)
+        prediction.add_(self.item_bias)
 
         if self.training:
             return prediction, user_embeds, item_embeds
