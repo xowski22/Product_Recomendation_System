@@ -14,11 +14,11 @@ def train_epoch(model: nn.Module,
     model.train() #switching model into train mode
     total_loss = 0.0
     for batch in train_loader:
-        user_ids = batch['user_id'].to(device)
-        item_ids = batch['item_id'].to(device)
-        ratings = batch['rating'].to(device)
+        user_ids = batch['user_id'].to(device, non_blocking=True)
+        item_ids = batch['item_id'].to(device, non_blocking=True)
+        ratings = batch['rating'].to(device, non_blocking=True)
 
-        #redicting ratings by foward pass
+        #predicting ratings by foward pass
         predictions, user_embeds, item_embeds = model(user_ids, item_ids)
         #calculating mse loss
         mse_loss = criterion(predictions, ratings)
@@ -28,7 +28,7 @@ def train_epoch(model: nn.Module,
         loss = mse_loss + reg_loss
 
         #backward pass - updating weights
-        optimizer.zero_grad()
+        optimizer.zero_grad(set_to_none=True)
         loss.backward()
         optimizer.step()
 
