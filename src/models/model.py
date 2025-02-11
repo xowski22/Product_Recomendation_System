@@ -6,7 +6,7 @@ class MatrixFactorization(nn.Module):
     def __init__(self, num_users: int, n_items: int, embedding_dim: int, reg_lambda: float):
 
         """
-        Neural matrix factorization model with the following feautures:
+        Neural matrix factorization model with the following features:
 
         -Embedding layers for users and items
         -Batch normalization for training stability
