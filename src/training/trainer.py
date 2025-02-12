@@ -28,7 +28,7 @@ def train_epoch(model: nn.Module,
         loss = mse_loss + reg_loss
 
         #backward pass - updating weights
-        optimizer.zero_grad(set_to_none=True)
+        optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
