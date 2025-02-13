@@ -33,3 +33,10 @@ response = requests.post(
 1.3 Undestanding Results
 
 Learn how to interpret recommendation scores and results
+
+Part 2: How-To Guides
+
+How to Integrate with Your Platform
+
+Step-by-step guides for common integration scenarios:
+
