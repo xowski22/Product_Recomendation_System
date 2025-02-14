@@ -40,3 +40,16 @@ How to Integrate with Your Platform
 
 Step-by-step guides for common integration scenarios:
 
+2.1 E-commerence Integration
+
+""""
+
+class EcommerenceIntegration:
+    def __init__(self, recommendation_api_url):
+        self.api_url = recommendation_api_url
+    
+    def get_personalized_products(self, user_id):
+        recommendations = self._get_recommendations(user_id)
+
+        return self._map_to_products(recommendations)
+""""
