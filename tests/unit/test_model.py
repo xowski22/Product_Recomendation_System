@@ -72,3 +72,45 @@ def test_batch_normalization(sample_model):
 
     assert not torch.allclose(user_embeds_train, user_embeds_eval)
 
+def test_dropout(sample_model):
+    users = torch.tensor([0, 1, 2], dtype=torch.long)
+    items = torch.tensor([0, 1, 2], dtype=torch.long)
+
+    sample_model.train()
+    pred1, _ , _ = sample_model(users, items)
+    pred2, _ , _ = sample_model(users, items)
+    assert not torch.allclose(pred1, pred2)
+
+    sample_model.eval()
+    with torch.no_grad():
+        pred1 = sample_model(users, items)
+        pred2 = sample_model(users, items)
+        assert not torch.allclose(pred1, pred2)
+
+def test_regularization_parameter(sample_model):
+    model1 = MatrixFactorization(num_users=10, n_items=20, embedding_dim=5, reg_lambda=0.01)
+    model2 = MatrixFactorization(num_users=10, n_items=20, embedding_dim=5, reg_lambda=0.1)
+
+    assert model1.reg_lambda == 0.01
+    assert model2.reg_lambda == 0.1
+
+def test_bias_terms(sample_model):
+    users = torch.tensor([0], dtype=torch.long)
+    items = torch.tensor([0], dtype=torch.long)
+
+    sample_model.eval()
+    with torch.no_grad():
+        original_pred = sample_model(users, items)
+
+        sample_model.global_bias.data = 1.0
+        biased_pred = sample_model(users, items)
+
+        assert torch.allclose(biased_pred - original_pred, torch.tensor([1.0]))
+
+def test_embedding_initialization(sample_model):
+
+    assert torch.abs(sample_model.user_embeddings.weight.mean()) < 0.1
+    assert torch.abs(sample_model.item_embeddings.weight.mean()) < 0.1
+
+    assert 0.001 < sample_model.user_embeddings.weight.std() < 0.1
+    assert 0.001 < sample_model.item_embeddings.weight.std() < 0.1
