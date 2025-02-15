@@ -20,9 +20,9 @@ def test_model_init():
     assert model.user_embeddings.weight.shape == (100, 10)
     assert model.item_embeddings.weight.shape == (50, 10)
 
-    assert model.global_bias.weight.shape == (1,)
-    assert model.user_bias.weight.shape == (100,)
-    assert model.item_bias.weight.shape == (50,)
+    assert model.global_bias.shape == torch.Size([1])
+    assert model.user_bias.shape == torch.Size([100])
+    assert model.item_bias.shape == torch.Size([50])
 
     assert isinstance(model.user_bn, nn.BatchNorm1d)
     assert isinstance(model.item_bn, nn.BatchNorm1d)
@@ -30,7 +30,7 @@ def test_model_init():
     assert model.item_bn.num_features == 10
 
     assert isinstance(model.dropout, nn.Dropout)
-    assert model.dropout == 0.2
+    assert model.dropout == nn.Dropout(p= 0.2, inplace=False)
 
 def test_forward_pass_training(sample_model):
     users = torch.tensor([0, 1, 2], dtype=torch.long)
