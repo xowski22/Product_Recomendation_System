@@ -30,7 +30,7 @@ def test_model_init():
     assert model.item_bn.num_features == 10
 
     assert isinstance(model.dropout, nn.Dropout)
-    assert model.dropout == nn.Dropout(p= 0.2, inplace=False)
+    assert model.dropout.p == 0.2
 
 def test_forward_pass_training(sample_model):
     users = torch.tensor([0, 1, 2], dtype=torch.long)
