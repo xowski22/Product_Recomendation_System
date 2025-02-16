@@ -1,86 +1,93 @@
-Project Recommendation System Documentation
+Matrix Factorization Recommendation System
 
-Part 1: Tutorials
+1. Theoretical Foundation
 
-Getting Started with Recommendations
+1.1 Collaborative Filtering Approach
 
-1.1 Basic Concepts
+Our implementation uses model-based collaborative filtering through matrix factorization. The core idea is to decompose user-item interaction matrix into lower-dimensional latent feature speces.
 
-- What is collaborative filtering?
-- How matrix factorization works
-- Understanding user-item interactions
-- Basic recommendation concepts
+Given a sparse user-item matrix R, we decompose it into:
 
-1.2 Your First Recommendation
+- User matrix U ∈ ℝ^(m×k)
+- Item matrix v ∈ ℝ^(m×k)
 
-"""
-import requests
+Where:
 
-base_url = "http://localhost:8080"
+- m is the number of users
+- n is the number of items
+- k is the embedding dimention
 
-response = requests.post(
+The rating prediction is then computed as:
 
-    f"{base_url}/recommend",
-    json={
-        "user_id": "1",
-        "n_recommendations": 5
+r̂ᵤᵢ = μ + bᵤ + bᵢ + uᵤᵀvᵢ
 
-    }
+Where:
 
-)
-"""
+- μ is the global bias
+- bᵤ is user bias
+- bᵢ is item bias
+- uᵤᵀvᵢ is the dot product of user and item latent features
 
-1.3 Undestanding Results
+1.2 Neural Network implementation
 
-Learn how to interpret recommendation scores and results
+I chose to implement matrix factorization using neural networks for a few reasons:
 
-Part 2: How-To Guides
+- Better handling of non-linear relationships
+- Flexibility in architecture modifications
+- Modern optimization techniques
+- Easy integration of regularization methods
 
-How to Integrate with Your Platform
+2. System Architecture Deep Dive
 
-Step-by-step guides for common integration scenarios:
+2.1 Data processing pipeline
 
-2.1 E-commerence Integration
+Our data pipeline is designed for efficient processing of the MovieLens-1M dataset while maintaining flexibility in other datasets.
 
-""""
+Design Considerations
+1. Abstraction Layer
 
-class EcommerenceIntegration:
-    def __init__(self, recommendation_api_url):
-        self.api_url = recommendation_api_url
-    
-    def get_personalized_products(self, user_id):
-        recommendations = self._get_recommendations(user_id)
+```angular2html
+class BaseDataLoader(ABC):
+    @abstractmethod
+    def load_data(self):
+        pass
 
-        return self._map_to_products(recommendations)
-""""
+    @abstractmethod
+    def proprocess_data(self):
+        pass
+```
 
-2.2 Batch Processing
+This abstract base allows for easy extension to other datasets while enforcing consistent interface
 
-Guide for processing large numbers of recommendations:
+2. Factory Pattern for Data Loading
+```angular2html
+class DataLoaderFactory:
+    @staticmethod
+    def get_loader(config):
+        if config['data']['type'] == 'movielens':
+            return MovieLensLoader(config)
+        # Extensible to other datasets
+```
 
-""""
-async def process_batch(user_ids, batch_size=100):
-    results = []
+3. Preprocessing Pipeline
 
-    for i in range(0, len(users_ids), batch_size):
-        batch = user_ids[i:i + batch_size]
-        batch_results = await asyncio.gather(
-            *[get_recommendations(user_id) for user_id in batch]
-        )
-        results.extend(batch_results)
-    return results
-""""
+- ID Mapping: Converts string IDs to dense integers
+- Rating Normalization: Scales ratings to [0,1] range
+- Train/Val Split: Implements time-based splitting
 
-How to Train Custom Models
+2.2 Model Architecture decisions
 
-Guide for training models in your own data:
+Our Matrix Factorization model incorporates several key architectural decisions:
 
-2.3 Data Preparation
+1. Embedding Layer Design
 
-"""
-def prepare_training_data(raw_data):
-    cleaned_data = remove_duplicates(raw_data)
-    user_item_matrix = create_matrix(cleaned_data)
-    
-    return train_test_split(user_item_matrix)
-"""
+```angular2html
+self.user_embeddings = nn.Embedding(num_users, embedding_dim)
+self.item_embeddings = nn.Embedding(num_items, embedding_dim)
+```
+
+- Why Embeddings?
+  - Efficient representation od sparse categorical data
+  - Learnable dense representations
+  - Memory efficient compared to one-hot encoding
+
