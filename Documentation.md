@@ -18,7 +18,7 @@ Where:
 
 - m is the number of users
 - n is the number of items
-- k is the embedding dimention
+- k is the embedding dimension
 
 The rating prediction is then computed as:
 
@@ -109,7 +109,7 @@ self.item_bn = nn.BatchNorm1d(embedding_dim)
 ```
 
 - Dropout prevents co-adaptation of features
-- Batch Nomalization:
+- Batch Normalization:
   - Reduces internal covariate shift
   - Enables higher learning rates
   - Provides regularization effect
