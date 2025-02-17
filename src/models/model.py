@@ -24,8 +24,8 @@ class MatrixFactorization(nn.Module):
         self.item_bn = nn.BatchNorm1d(embedding_dim)
 
         #weights init
-        nn.init.normal_(self.user_embeddings.weight, std=0.001)
-        nn.init.normal_(self.item_embeddings.weight, std=0.001)
+        nn.init.normal_(self.user_embeddings.weight, std=0.01)
+        nn.init.normal_(self.item_embeddings.weight, std=0.01)
 
         #regularization parameter
         self.reg_lambda = reg_lambda
@@ -54,9 +54,7 @@ class MatrixFactorization(nn.Module):
         #         )
 
         prediction = torch.sum(user_embeds * item_embeds, dim=1)
-        prediction.add_(self.global_bias.squeeze())
-        prediction.add_(self.user_bias)
-        prediction.add_(self.item_bias)
+        prediction = prediction + self.global_bias + user_bias + item_bias
 
         if self.training:
             return prediction, user_embeds, item_embeds
