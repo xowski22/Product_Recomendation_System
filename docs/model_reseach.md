@@ -5,9 +5,9 @@ Collaborative filtering
 
 Matrix Factorization 
 - 
-- helps to undestand the hidden patterns how users interact with items
-- each dimention in vector is its own feature
-- it learns by multipliyng vectors, thus giving us a prediction that matches the rating
+- helps to understand the hidden patterns how users interact with items
+- each dimension in vector is its own feature
+- it learns by multiplying vectors, thus giving us a prediction that matches the rating
 
 Other methods of Collaborative filtering
 - 

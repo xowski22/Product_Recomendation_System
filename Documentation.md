@@ -87,7 +87,57 @@ self.item_embeddings = nn.Embedding(num_items, embedding_dim)
 ```
 
 - Why Embeddings?
-  - Efficient representation od sparse categorical data
+  - Efficient representation of sparse categorical data
   - Learnable dense representations
   - Memory efficient compared to one-hot encoding
 
+2. Regularization Strategy
+
+```angular2html
+self.dropout = nn.Dropout(0.2)
+
+self.user_bn = nn.BatchNorm1d(embedding_dim)
+self.item_bn = nn.BatchNorm1d(embedding_dim)
+```
+
+- Dropout prevents co-adaptation of features
+- Batch Nomalization:
+  - Reduces internal covariate shift
+  - Enables higher learning rates
+  - Provides regularization effect
+
+3. Bias Terms
+
+```angular2html
+self.global_bias = nn.Parameter(torch.zeros(1))
+self.user_bias = nn.Parameter(torch.zeros(num_users))
+self.item_bias = nn.Parameter(torch.zeros(n_items))
+```
+
+- Captures user and items specific rating tendencies
+- Global bias for dataset-wide rating trends
+- Initialized to zero to learn true biases
+
+3. Training Pipeline Implementation
+
+3.1 Training Flow Architecture
+
+The training pipeline is designed with following considerations:
+
+1. Separation of Concerns
+```angular2html
+def train_model(model, train_loader, val_loader, config):
+    # Training orchestration
+
+def train_epoch(model, train_loader, optimizer, criterion, device):
+    # Single epoch training logic
+
+def validate(model, val_loader, criterion, device):
+    # Validation logic
+```
+
+2. Loss Function Design
+
+```angular2html
+
+```
