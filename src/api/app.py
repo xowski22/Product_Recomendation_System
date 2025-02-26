@@ -101,7 +101,7 @@ def load_model_and_mappings() -> Tuple[MatrixFactorization, Dict, Dict]:
         logger.info(f"Loading model from: {model_path}")
         if not model_path.exists():
             raise FileNotFoundError(f"Model file not found at {model_path}")
-        model.load_state_dict(torch.load(model_path))
+        model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
         model.eval()
         logger.info("Model loaded successfully")
 
